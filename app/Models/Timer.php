@@ -11,10 +11,12 @@ class Timer extends Model
 
     protected $fillable = [
         'name',
+        'level',
         'delay_minutes',
         'location',
         'died_at',
         'spawn_at',
+        'note'
     ];
 
     protected $casts = [

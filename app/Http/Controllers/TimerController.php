@@ -91,20 +91,43 @@ class TimerController extends Controller
             'level' => 'nullable|integer|min:1|max:100',
             'delay_minutes' => 'required|integer|min:1',
             'location' => 'nullable|string|max:255',
+            'died_at' => 'nullable|date',
+            'note' => 'nullable|string'
         ]);
 
         $timer->update($validated);
+
+        // If death time is set, update spawn time
+        if ($timer->died_at) {
+            $timer->spawn_at = $timer->died_at->addMinutes($timer->delay_minutes);
+            $timer->save();
+        } else {
+            // If death time is cleared, clear spawn time too
+            $timer->spawn_at = null;
+            $timer->save();
+        }
 
         return redirect()->route('timers.index');
     }
 
     public function updateSpawnTime(Timer $timer)
     {
-        $timer->died_at = now();
-        $timer->spawn_at = now()->addMinutes($timer->delay_minutes);
+        // Get current time in UTC
+        $now = now();
+        $timer->died_at = $now;
+        $timer->spawn_at = $now->copy()->addMinutes($timer->delay_minutes);
         $timer->save();
 
-        return redirect()->route('timers.index');
+        return redirect()->back();
+    }
+
+    public function resetSpawnTime(Timer $timer)
+    {
+        $timer->died_at = null;
+        $timer->spawn_at = null;
+        $timer->save();
+
+        return redirect()->back();
     }
 
     /**

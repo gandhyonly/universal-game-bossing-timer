@@ -21,6 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('timers', TimerController::class);
     Route::post('/timers/{timer}/update-spawn', [TimerController::class, 'updateSpawnTime'])->name('timers.update-spawn');
+    Route::post('/timers/{timer}/reset-spawn', [TimerController::class, 'resetSpawnTime'])->name('timers.reset-spawn');
 
     Route::resource('users', UserController::class);
     Route::post('/users/{user}/toggle-admin', [UserController::class, 'toggleAdmin'])->name('users.toggle-admin');

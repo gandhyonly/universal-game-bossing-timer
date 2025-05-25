@@ -10,44 +10,46 @@ const props = defineProps({
 const countdowns = ref({});
 const alarms = ref({});
 const audio = new Audio('/sounds/alarm.mp3');
+const showResetModal = ref(false);
+const selectedTimer = ref(null);
 
-const formatTime = (time) => {
-    if (!time) return 'Not set';
-    return new Date(time).toLocaleString();
-};
-
-const timeUntilSpawn = (spawnAt) => {
-    if (!spawnAt) return 'Not set';
-    const now = new Date();
-    const spawn = new Date(spawnAt);
-    const diff = spawn - now;
+const formatSpawnTime = (timer) => {
+    if (!timer.spawn_at) return 'Not set';
     
-    if (diff <= 0) {
-        const elapsed = Math.abs(diff);
-        const hours = Math.floor(elapsed / (1000 * 60 * 60));
-        const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
-        
-        if (hours > 0) {
-            return `Already Spawn - ${hours}h ${minutes}m ${seconds}s`;
-        }
-        return `Already Spawn - ${minutes}m ${seconds}s`;
+    const now = new Date();
+    const spawnTime = new Date(timer.spawn_at);
+    
+    if (spawnTime <= now) {
+        return 'Spawned';
     }
     
+    // Calculate time difference in milliseconds
+    const diff = spawnTime.getTime() - now.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
+    // Format the spawn time using the browser's locale
+    const spawnTimeStr = spawnTime.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+    
     if (hours > 0) {
-        return `${hours}h ${minutes}m ${seconds}s`;
+        return `${hours}h ${minutes}m ${seconds}s\nSpawns at ${spawnTimeStr}`;
     }
-    return `${minutes}m ${seconds}s`;
+    return `${minutes}m ${seconds}s\nSpawns at ${spawnTimeStr}`;
 };
 
 const updateCountdowns = () => {
     props.timers.forEach(timer => {
         if (timer.spawn_at) {
-            countdowns.value[timer.id] = timeUntilSpawn(timer.spawn_at);
+            countdowns.value[timer.id] = formatSpawnTime(timer);
             
             // Check for alarm
             const now = new Date();
@@ -77,8 +79,40 @@ onUnmounted(() => {
 });
 
 const updateTimer = (timer) => {
-    const form = useForm({});
-    form.post(route('timers.update-spawn', timer.id));
+    const form = useForm({
+        timer_id: timer.id
+    });
+
+    form.post(route('timers.update-spawn', { timer: timer.id }));
+};
+
+const confirmReset = (timer) => {
+    selectedTimer.value = timer;
+    showResetModal.value = true;
+};
+
+const cancelReset = () => {
+    showResetModal.value = false;
+    selectedTimer.value = null;
+};
+
+const resetTimer = () => {
+    if (selectedTimer.value) {
+        const form = useForm({
+            timer_id: selectedTimer.value.id
+        });
+
+        form.post(route('timers.reset-spawn', { timer: selectedTimer.value.id }), {
+            onSuccess: () => {
+                showResetModal.value = false;
+                selectedTimer.value = null;
+            }
+        });
+    }
+};
+
+const isSpawned = (timer) => {
+    return new Date(timer.spawn_at) <= new Date();
 };
 </script>
 
@@ -102,66 +136,74 @@ const updateTimer = (timer) => {
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
+
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full bg-white">
+                                <thead>
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Timer Name
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Level
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Location (Duration)
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Spawn Time
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
+                                        <th class="py-2 px-4 border-b">Timer Name</th>
+                                        <th class="py-2 px-4 border-b">Location (Duration)</th>
+                                        <th class="py-2 px-4 border-b">Level</th>
+                                        <th class="py-2 px-4 border-b">Spawn Time</th>
+                                        <th class="py-2 px-4 border-b">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="timer in timers" :key="timer.id" :class="{
-                                        'bg-yellow-100': alarms[timer.id]
-                                    }">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ timer.name }}</div>
+                                <tbody>
+                                    <tr v-for="timer in timers" :key="timer.id" class="hover:bg-gray-50">
+                                        <td class="py-2 px-4 border-b">
+                                            <div class="font-medium">{{ timer.name }}</div>
+                                            <div v-if="timer.note" class="text-sm text-gray-500 mt-1">{{ timer.note }}</div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">
-                                                {{ timer.level ? `Lv.${timer.level}` : 'N/A' }}
+                                        <td class="py-2 px-4 border-b">{{ timer.location }} ({{ timer.delay_minutes }}m)</td>
+                                        <td class="py-2 px-4 border-b">{{ timer.level }}</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <span :class="{
+                                                'text-red-500': isSpawned(timer),
+                                                'text-green-500': !isSpawned(timer)
+                                            }" class="whitespace-pre-line">
+                                                {{ countdowns[timer.id] || formatSpawnTime(timer) }}
+                                            </span>
+                                        </td>
+                                        <td class="py-2 px-4 border-b">
+                                            <div class="flex space-x-2">
+                                                <button @click="confirmReset(timer)" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm">
+                                                    Reset
+                                                </button>
+                                                <button @click="updateTimer(timer)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-sm">
+                                                    Update
+                                                </button>
+                                                <Link :href="route('timers.edit', timer.id)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">
+                                                    Edit
+                                                </Link>
                                             </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">
-                                                {{ timer.location || 'Not set' }}
-                                                <span class="text-gray-500">({{ timer.delay_minutes }}m)</span>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm" :class="{
-                                                'text-green-600': new Date(timer.spawn_at) <= new Date(),
-                                                'text-red-600': new Date(timer.spawn_at) > new Date(),
-                                                'font-bold': alarms[timer.id]
-                                            }">
-                                                {{ countdowns[timer.id] || timeUntilSpawn(timer.spawn_at) }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button
-                                                @click="updateTimer(timer)"
-                                                class="text-indigo-600 hover:text-indigo-900 mr-4"
-                                            >
-                                                Update
-                                            </button>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Confirmation Modal -->
+        <div v-if="showResetModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Reset Timer</h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p class="text-sm text-gray-500">
+                            Are you sure you want to clear the spawn time for "{{ selectedTimer?.name }}"?
+                            This will remove the current spawn and death times.
+                        </p>
+                    </div>
+                    <div class="flex justify-center space-x-4 mt-4">
+                        <button @click="cancelReset" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                            Cancel
+                        </button>
+                        <button @click="resetTimer" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Reset
+                        </button>
                     </div>
                 </div>
             </div>
