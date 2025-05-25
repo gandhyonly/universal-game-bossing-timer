@@ -95,11 +95,18 @@ class TimerController extends Controller
             'note' => 'nullable|string'
         ]);
 
+
+        // Convert died_at string to Carbon instance in Jakarta timezone if it exists
+        if (isset($validated['died_at'])) {
+            $validated['died_at'] = \Carbon\Carbon::parse($validated['died_at']);
+        }
+
         $timer->update($validated);
 
         // If death time is set, update spawn time
         if ($timer->died_at) {
-            $timer->spawn_at = $timer->died_at->addMinutes($timer->delay_minutes);
+            $diedAt = $timer->died_at;
+            $timer->spawn_at = $diedAt->copy()->addMinutes($timer->delay_minutes);
             $timer->save();
         } else {
             // If death time is cleared, clear spawn time too
@@ -112,8 +119,8 @@ class TimerController extends Controller
 
     public function updateSpawnTime(Timer $timer)
     {
-        // Get current time in UTC
-        $now = now();
+        // Get current time in Jakarta timezone
+        $now = now()->setTimezone('Asia/Jakarta');
         $timer->died_at = $now;
         $timer->spawn_at = $now->copy()->addMinutes($timer->delay_minutes);
         $timer->save();

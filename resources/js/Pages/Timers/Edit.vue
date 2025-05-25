@@ -99,7 +99,7 @@ const submit = () => {
                                 <InputError class="mt-2" :message="form.errors.location" />
                             </div>
 
-                            <div>
+                            <div class="mt-4">
                                 <InputLabel for="died_at" value="Death Time" />
                                 <TextInput
                                     id="died_at"

@@ -18,18 +18,19 @@ const formatSpawnTime = (timer) => {
     
     const now = new Date();
     const spawnTime = new Date(timer.spawn_at);
+
+    console.log('Timer.spawn_at', timer.spawn_at);
+    console.log('spawnTime', spawnTime);
     
     if (spawnTime <= now) {
         return 'Spawned';
     }
     
-    // Calculate time difference in milliseconds
     const diff = spawnTime.getTime() - now.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
-    // Format the spawn time using the browser's locale
     const spawnTimeStr = spawnTime.toLocaleString('en-US', {
         year: 'numeric',
         month: '2-digit',
@@ -39,6 +40,7 @@ const formatSpawnTime = (timer) => {
         second: '2-digit',
         hour12: false
     });
+    console.log(spawnTimeStr);
     
     if (hours > 0) {
         return `${hours}h ${minutes}m ${seconds}s\nSpawns at ${spawnTimeStr}`;
