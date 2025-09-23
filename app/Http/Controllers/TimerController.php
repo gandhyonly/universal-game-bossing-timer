@@ -107,10 +107,12 @@ class TimerController extends Controller
         if ($timer->died_at) {
             $diedAt = $timer->died_at;
             $timer->spawn_at = $diedAt->copy()->addMinutes($timer->delay_minutes);
+            $timer->notified_two_min = false;
             $timer->save();
         } else {
             // If death time is cleared, clear spawn time too
             $timer->spawn_at = null;
+            $timer->notified_two_min = false;
             $timer->save();
         }
 
@@ -123,6 +125,7 @@ class TimerController extends Controller
         $now = now()->setTimezone('Asia/Jakarta');
         $timer->died_at = $now;
         $timer->spawn_at = $now->copy()->addMinutes($timer->delay_minutes);
+        $timer->notified_two_min = false;
         $timer->save();
 
         return redirect()->back();
@@ -132,6 +135,7 @@ class TimerController extends Controller
     {
         $timer->died_at = null;
         $timer->spawn_at = null;
+        $timer->notified_two_min = false;
         $timer->save();
 
         return redirect()->back();

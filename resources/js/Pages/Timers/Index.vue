@@ -12,6 +12,7 @@ const alarms = ref({});
 const audio = new Audio('/sounds/alarm.mp3');
 const showResetModal = ref(false);
 const selectedTimer = ref(null);
+const showUpdateModal = ref(false);
 
 const formatSpawnTime = (timer) => {
     if (!timer.spawn_at) return 'Not set';
@@ -80,12 +81,29 @@ onUnmounted(() => {
     }
 });
 
-const updateTimer = (timer) => {
-    const form = useForm({
-        timer_id: timer.id
-    });
+const confirmUpdate = (timer) => {
+    selectedTimer.value = timer;
+    showUpdateModal.value = true;
+};
 
-    form.post(route('timers.update-spawn', { timer: timer.id }));
+const cancelUpdate = () => {
+    showUpdateModal.value = false;
+    selectedTimer.value = null;
+};
+
+const performUpdate = () => {
+    if (selectedTimer.value) {
+        const form = useForm({
+            timer_id: selectedTimer.value.id
+        });
+
+        form.post(route('timers.update-spawn', { timer: selectedTimer.value.id }), {
+            onSuccess: () => {
+                showUpdateModal.value = false;
+                selectedTimer.value = null;
+            }
+        });
+    }
 };
 
 const confirmReset = (timer) => {
@@ -171,7 +189,7 @@ const isSpawned = (timer) => {
                                                 <button @click="confirmReset(timer)" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm">
                                                     Reset
                                                 </button>
-                                                <button @click="updateTimer(timer)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-sm">
+                                                <button @click="confirmUpdate(timer)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-sm">
                                                     Update
                                                 </button>
                                                 <Link :href="route('timers.edit', timer.id)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">
@@ -205,6 +223,28 @@ const isSpawned = (timer) => {
                         </button>
                         <button @click="resetTimer" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                             Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Confirmation Modal -->
+        <div v-if="showUpdateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Update Timer</h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p class="text-sm text-gray-500">
+                            Update spawn for "{{ selectedTimer?.name }}"
+                        </p>
+                    </div>
+                    <div class="flex justify-center space-x-4 mt-4">
+                        <button @click="cancelUpdate" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                            Cancel
+                        </button>
+                        <button @click="performUpdate" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            Update
                         </button>
                     </div>
                 </div>

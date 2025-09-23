@@ -16,11 +16,13 @@ class Timer extends Model
         'location',
         'died_at',
         'spawn_at',
-        'note'
+        'note',
+        'notified_two_min'
     ];
 
     protected $casts = [
         'died_at' => 'datetime',
         'spawn_at' => 'datetime',
+        'notified_two_min' => 'boolean',
     ];
 }
