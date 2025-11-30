@@ -83,6 +83,11 @@ class UserController extends Controller
             return redirect()->route('users.index')->withErrors(['error' => 'You cannot delete your own account.']);
         }
 
+        // Prevent deleting admin users
+        if ($user->isAdmin()) {
+            return redirect()->route('users.index')->withErrors(['error' => 'You cannot delete admin users.']);
+        }
+
         $user->delete();
         return redirect()->route('users.index');
     }

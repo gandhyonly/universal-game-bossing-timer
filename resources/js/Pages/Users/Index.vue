@@ -92,13 +92,14 @@ const getRoleBadgeClass = (role) => {
                                         </td>
                                         <td class="py-2 px-4 border-b">
                                             <button 
-                                                v-if="user.id !== page.props.auth.user.id"
+                                                v-if="user.id !== page.props.auth.user.id && user.role !== 'admin'"
                                                 @click="confirmDelete(user)" 
                                                 class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm"
                                             >
                                                 Delete
                                             </button>
-                                            <span v-else class="text-gray-400 text-sm">Current User</span>
+                                            <span v-else-if="user.id === page.props.auth.user.id" class="text-gray-400 text-sm">Current User</span>
+                                            <span v-else class="text-gray-400 text-sm">Cannot Delete Admin</span>
                                         </td>
                                     </tr>
                                 </tbody>
