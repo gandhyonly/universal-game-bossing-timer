@@ -27,9 +27,6 @@ class NotifyUpcomingSpawns extends Command
         foreach ($timers as $timer) {
             $diffSeconds = $timer->spawn_at->diffInSeconds($now);
             $diffSeconds = abs($diffSeconds);
-            \Log::info("now: {$now}");
-            \Log::info("spawn_at: {$timer->spawn_at}");
-            \Log::info("Diff seconds: {$diffSeconds}");
             $minutes = intdiv($diffSeconds, 60);
             $seconds = $diffSeconds % 60;
 

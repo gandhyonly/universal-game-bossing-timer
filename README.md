@@ -62,3 +62,15 @@ php artisan serve
 ## License
 
 MIT License
+
+
+sudo chown -R gandhy:www-data /var/www/universal-game-bossing-timer
+
+
+sudo chown -R www-data:www-data /var/www/universal-game-bossing-timer
+
+
+
+
+
+
