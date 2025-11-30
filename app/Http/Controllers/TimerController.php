@@ -61,7 +61,7 @@ class TimerController extends Controller
         $validated['updated_by'] = Auth::id();
         $timer = Timer::create($validated);
 
-        return redirect()->route('timers.index');
+        return redirect()->route('dashboard');
     }
 
     /**
@@ -120,7 +120,7 @@ class TimerController extends Controller
             $timer->save();
         }
 
-        return redirect()->route('timers.index');
+        return redirect()->route('dashboard');
     }
 
     public function updateSpawnTime(Timer $timer)
@@ -153,6 +153,6 @@ class TimerController extends Controller
     public function destroy(Timer $timer)
     {
         $timer->delete();
-        return redirect()->route('timers.index');
+        return redirect()->route('dashboard');
     }
 }
