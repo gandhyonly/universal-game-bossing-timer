@@ -34,7 +34,7 @@ class NotifyUpcomingSpawns extends Command
             $seconds = $diffSeconds % 60;
 
             $message = sprintf(
-                '@LINEAGE2M :alarm_clock: %s spawns in %dm %ds at %s (lvl %s, %dm).',
+                '@here :alarm_clock: %s spawns in %dm %ds at %s (lvl %s, %dm).',
                 $timer->name,
                 $minutes,
                 $seconds,
