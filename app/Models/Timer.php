@@ -17,7 +17,8 @@ class Timer extends Model
         'died_at',
         'spawn_at',
         'note',
-        'notified_two_min'
+        'notified_two_min',
+        'updated_by'
     ];
 
     protected $casts = [
@@ -25,4 +26,9 @@ class Timer extends Model
         'spawn_at' => 'datetime',
         'notified_two_min' => 'boolean',
     ];
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 }

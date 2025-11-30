@@ -1,16 +1,12 @@
 <script setup>
-import Checkbox from '@/Components/Checkbox.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 
 defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
     status: {
         type: String,
     },
@@ -19,7 +15,6 @@ defineProps({
 const form = useForm({
     email: '',
     password: '',
-    remember: false,
 });
 
 const submit = () => {
@@ -80,21 +75,6 @@ const submit = () => {
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between">
-                        <label class="flex items-center">
-                            <Checkbox name="remember" v-model:checked="form.remember" class="bg-gray-700 border-gray-600" />
-                            <span class="ms-2 text-sm text-gray-300">Remember me</span>
-                        </label>
-
-                        <Link
-                            v-if="canResetPassword"
-                            :href="route('password.request')"
-                            class="text-sm text-indigo-400 hover:text-indigo-300"
-                        >
-                            Forgot your password?
-                        </Link>
-                    </div>
-
                     <div>
                         <PrimaryButton
                             class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -103,15 +83,6 @@ const submit = () => {
                         >
                             Sign in
                         </PrimaryButton>
-                    </div>
-
-                    <div class="text-center">
-                        <Link
-                            :href="route('register')"
-                            class="text-sm text-indigo-400 hover:text-indigo-300"
-                        >
-                            Don't have an account? Register here
-                        </Link>
                     </div>
                 </form>
             </div>

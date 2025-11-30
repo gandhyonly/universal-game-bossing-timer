@@ -1,10 +1,18 @@
 <script setup>
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 
 const props = defineProps({
     timers: Array,
+});
+
+const page = usePage();
+const isAdmin = computed(() => {
+    return page.props.auth?.user?.is_admin || false;
+});
+const canEditTimers = computed(() => {
+    return page.props.auth?.user?.can_edit_timers || false;
 });
 
 const countdowns = ref({});
@@ -144,6 +152,7 @@ const isSpawned = (timer) => {
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Timers</h2>
                 <Link
+                    v-if="isAdmin"
                     :href="route('timers.create')"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
                 >
@@ -165,7 +174,8 @@ const isSpawned = (timer) => {
                                         <th class="py-2 px-4 border-b">Location (Duration)</th>
                                         <th class="py-2 px-4 border-b">Level</th>
                                         <th class="py-2 px-4 border-b">Spawn Time</th>
-                                        <th class="py-2 px-4 border-b">Actions</th>
+                                        <th class="py-2 px-4 border-b">Updated By</th>
+                                        <th v-if="canEditTimers" class="py-2 px-4 border-b">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -185,6 +195,9 @@ const isSpawned = (timer) => {
                                             </span>
                                         </td>
                                         <td class="py-2 px-4 border-b">
+                                            {{ timer.updated_by?.email || '-' }}
+                                        </td>
+                                        <td v-if="canEditTimers" class="py-2 px-4 border-b">
                                             <div class="flex space-x-2">
                                                 <button @click="confirmReset(timer)" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm">
                                                     Reset

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Timer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class TimerController extends Controller
@@ -16,6 +17,7 @@ class TimerController extends Controller
         $now = now();
         
         $timers = Timer::query()
+            ->with('updatedBy')
             ->orderByRaw('
                 CASE 
                     WHEN spawn_at IS NULL THEN 2
@@ -56,6 +58,7 @@ class TimerController extends Controller
             'location' => 'nullable|string|max:255',
         ]);
 
+        $validated['updated_by'] = Auth::id();
         $timer = Timer::create($validated);
 
         return redirect()->route('timers.index');
@@ -101,6 +104,7 @@ class TimerController extends Controller
             $validated['died_at'] = \Carbon\Carbon::parse($validated['died_at']);
         }
 
+        $validated['updated_by'] = Auth::id();
         $timer->update($validated);
 
         // If death time is set, update spawn time
@@ -126,6 +130,7 @@ class TimerController extends Controller
         $timer->died_at = $now;
         $timer->spawn_at = $now->copy()->addMinutes($timer->delay_minutes);
         $timer->notified_two_min = false;
+        $timer->updated_by = Auth::id();
         $timer->save();
 
         return redirect()->back();
@@ -136,6 +141,7 @@ class TimerController extends Controller
         $timer->died_at = null;
         $timer->spawn_at = null;
         $timer->notified_two_min = false;
+        $timer->updated_by = Auth::id();
         $timer->save();
 
         return redirect()->back();

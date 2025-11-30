@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'is_admin',
     ];
 
     /**
@@ -46,5 +48,25 @@ class User extends Authenticatable
     public function timers()
     {
         return $this->hasMany(Timer::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isEditor(): bool
+    {
+        return $this->role === 'editor';
+    }
+
+    public function isViewer(): bool
+    {
+        return $this->role === 'viewer';
+    }
+
+    public function canEditTimers(): bool
+    {
+        return $this->isAdmin() || $this->isEditor();
     }
 }

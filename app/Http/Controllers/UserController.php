@@ -10,11 +10,6 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('admin')->except(['index', 'show']);
-    }
-
     public function index()
     {
         $users = User::latest()->get();
@@ -34,12 +29,15 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role' => 'required|in:editor,viewer', // Only editor and viewer can be assigned
         ]);
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'is_admin' => false, // Admins cannot be created through this interface
         ]);
 
         return redirect()->route('users.index');
@@ -64,22 +62,38 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'role' => 'nullable|in:admin,editor,viewer',
         ]);
 
-        $user->update($request->only('name', 'email'));
+        $data = $request->only('name', 'email');
+        if ($request->has('role')) {
+            $data['role'] = $request->role;
+            $data['is_admin'] = $request->role === 'admin';
+        }
+
+        $user->update($data);
 
         return redirect()->route('users.index');
     }
 
     public function destroy(User $user)
     {
+        // Prevent deleting yourself
+        if ($user->id === auth()->id()) {
+            return redirect()->route('users.index')->withErrors(['error' => 'You cannot delete your own account.']);
+        }
+
         $user->delete();
         return redirect()->route('users.index');
     }
 
     public function toggleAdmin(User $user)
     {
-        $user->update(['is_admin' => !$user->is_admin]);
+        $newRole = $user->role === 'admin' ? 'viewer' : 'admin';
+        $user->update([
+            'role' => $newRole,
+            'is_admin' => $newRole === 'admin'
+        ]);
         return redirect()->route('users.index');
     }
 }
